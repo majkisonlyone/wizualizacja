@@ -5,23 +5,36 @@ import numpy as np
 from OpenGL.GL.shaders import compileProgram, compileShader
 
 vsc = """
-attribute vec3 position;
+attribute vec3 pozycja;
+attribute vec4 kolor;
+varying vec4 frag_kolor;
+//uniform mat4 transl_mat;
 void main() {
-gl_Position = vec4(position, 1.0);
+gl_Position = vec4(pozycja, 1.0);
+frag_kolor = kolor;
 } """
 fsc = """
-#ifdef GL_ES
-precision mediump float;
-#endif
-
-uniform vec2 u_resolution;
-uniform vec2 u_mouse;
-uniform float u_time;
-
+varying vec4 frag_kolor;
 void main() {
-	vec2 st = gl_FragCoord.xy/u_resolution;
-	gl_FragColor = vec4(st.x,st.y,0.0,1.0);
-}"""
+gl_FragColor = frag_kolor;
+} """
+
+
+class RenderedObject:
+    def __init__(self, vao, inds, length, draw_option):
+        self.vao = vao
+        self.length = length
+        self.draw_option = draw_option
+        self.inds = inds
+
+
+class RenderOptions:
+    def __init__(self, verts, vert_len, inds, inds_len, draw_option):
+        self.verts = verts
+        self.vert_len = vert_len
+        self.inds = inds
+        self.inds_len = inds_len
+        self.draw_option = draw_option
 
 
 class Renderer:
@@ -33,11 +46,10 @@ class Renderer:
         glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT)
         glutInitWindowPosition(100, 100)
         glutCreateWindow(name)
-        glClearColor(0.0, 0.0, 0.0, 1.0)  # Kolor tła
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        glMatrixMode(GL_MODELVIEW)
+        glClearColor(0.1, 0.1, 0.1, 1.0)  # Kolor tła
+        glEnable(GL_DEPTH_TEST)
+        glDepthFunc(GL_LESS)
+        self.rendered_objects = []
 
     def render(self, func):
         def function():
@@ -86,29 +98,82 @@ class Renderer:
         glDetachShader(self.shader, vshader)
         glDetachShader(self.shader, fshader)
 
-    def _prerender(self):
-        verts = np.zeros(3, [("position", np.float32, 3)])
-        verts["position"] = [(-1, -1, 0), (1, -1, 0), (1, 1, 0)]
-        buf = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, buf)
-        glBufferData(GL_ARRAY_BUFFER, verts.nbytes, verts, GL_STATIC_DRAW)
-        width = verts.strides[0]
-        offset = ctypes.c_void_p(0)
-        position = glGetAttribLocation(self.shader, "position")
-        glEnableVertexAttribArray(position)
-        glBindBuffer(GL_ARRAY_BUFFER, buf)
-        glVertexAttribPointer(position, 3, GL_FLOAT, False, width, offset)
+    def _prerender(self, render_options):
+        for render in render_options:
+            temp_vao = glGenVertexArrays(1)
+            glBindVertexArray(temp_vao)
+            buf = glGenBuffers(1)
+            glBindBuffer(GL_ARRAY_BUFFER, buf)
+            glBufferData(
+                GL_ARRAY_BUFFER, render.verts.nbytes, render.verts, GL_STATIC_DRAW
+            )
+            width = render.verts.strides[0]
+            offset = ctypes.c_void_p(0)
+            position = glGetAttribLocation(self.shader, "pozycja")
+            glEnableVertexAttribArray(position)
+            glBindBuffer(GL_ARRAY_BUFFER, buf)
+            glVertexAttribPointer(position, 3, GL_FLOAT, False, width, offset)
+            offset = ctypes.c_void_p(render.verts.dtype["pos"].itemsize)
+            color = glGetAttribLocation(self.shader, "kolor")
+            glEnableVertexAttribArray(color)
+            glBindBuffer(GL_ARRAY_BUFFER, buf)
+            glVertexAttribPointer(color, 4, GL_FLOAT, False, width, offset)
+            ebo = glGenBuffers(1)
+            glBindBuffer(GL_ARRAY_BUFFER, ebo)
+            glBufferData(
+                GL_ARRAY_BUFFER, render.inds.nbytes, render.inds, GL_STATIC_DRAW
+            )
+            glBindVertexArray(0)
+            print("prerend")
+            self.rendered_objects.append(
+                RenderedObject(
+                    temp_vao, render.inds, len(render.inds), render.draw_option
+                )
+            )
 
-    def render_with_shader(self, disp):
-        glEnable(GL_DEPTH_TEST)
-        glDepthFunc(GL_LESS)
+    def show(self):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        for obj in self.rendered_objects:
+            glBindVertexArray(obj.vao)
+            glDrawElements(obj.draw_option, obj.length, GL_UNSIGNED_INT, obj.inds)
+        glutSwapBuffers()
 
+    def reshape(self, w, h):
+        glViewport(0, 0, w, h)
+
+    def render_with_shader(self, render_options : list[RenderOptions], idle = None, keyboard = None):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glutDisplayFunc(self.show)
+        glutReshapeFunc(self.reshape)
+        self._shade()
+        self._prerender(render_options)
+        if idle is not None:
+            print("idle")
+            glutIdleFunc(idle)
+        if keyboard is not None:
+            print("keyboard")
+            glutKeyboardFunc(keyboard)
+        glutMainLoop()
+
+    def render_with_shader_rot(self, render_options_func, idle = None, keyboard = None):
         def display():
-            disp()
+            self.rendered_objects = []
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            self._shade()
+            self._prerender(render_options_func())
+            for obj in self.rendered_objects:
+                glBindVertexArray(obj.vao)
+                glDrawElements(obj.draw_option, obj.length, GL_UNSIGNED_INT, obj.inds)
             glutSwapBuffers()
-
+        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glutDisplayFunc(display)
-        self._shade()
-        self._prerender()
+        glutReshapeFunc(self.reshape)
+
+        if idle is not None:
+            print("idle")
+            glutIdleFunc(idle)
+        if keyboard is not None:
+            print("keyboard")
+            glutKeyboardFunc(keyboard)
         glutMainLoop()

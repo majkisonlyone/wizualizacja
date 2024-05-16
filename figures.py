@@ -2,6 +2,7 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import math
+from renderer import RenderOptions
 
 id = 0
 
@@ -21,232 +22,235 @@ class Figure:
         pass
 
     def rotate_x(self, theta):
-        return np.array(
-            [
-                [1, 0, 0],
-                [0, math.cos(theta), -math.sin(theta)],
-                [0, math.sin(theta), math.cos(theta)],
-            ]
+        mat = np.zeros(3, [("pos", np.float32, 3)])
+        mat['pos'] = (
+                (1.0, 0.0, 0.0),
+                (0.0, math.cos(theta), -math.sin(theta)),
+                (0.0, math.sin(theta), math.cos(theta)),
         )
+        return mat["pos"]
 
     def rotate_y(self, theta):
-        return np.array(
-            [
-                [math.cos(theta), 0, math.sin(theta)],
-                [0, 1, 0],
-                [-math.sin(theta), 0, math.cos(theta)],
-            ]
+        mat = np.zeros(3, [("pos", np.float32, 3)])
+        mat['pos'] = (
+                (math.cos(theta), 0.0, math.sin(theta)),
+                (0.0, 1.0, 0.0),
+                (-math.sin(theta), 0.0, math.cos(theta)),
         )
+        return mat["pos"]
 
     def rotate_z(self, theta):
-        return np.array(
-            [
-                [math.cos(theta), -math.sin(theta), 0],
-                [math.sin(theta), math.cos(theta), 0],
-                [0, 0, 1],
-            ]
-        )
+        mat = np.zeros(3, [("pos", np.float32, 3)])
+        mat['pos'] = (
+                (math.cos(theta), -math.sin(theta), 0.0),
+                (math.sin(theta), math.cos(theta), 0.0),
+                (0.0, 0.0, 1.0))
+        return mat["pos"]
 
     def rotate_vertices(self, vertices, angle):
-        vertices = np.dot(vertices, self.rotate_x(angle[0]))
-        vertices = np.dot(vertices, self.rotate_y(angle[1]))
-        vertices = np.dot(vertices, self.rotate_z(angle[2]))
+        verts = np.dot(vertices["pos"], self.rotate_x(angle[0]))
+        verts = np.dot(verts, self.rotate_y(angle[1]))
+        verts = np.dot(verts, self.rotate_z(angle[2]))
+        vertices['pos'] = verts
         return vertices
+
+    def translate(self, vertices):
+        for vert in vertices["pos"]:
+            vert[0] += self.x
+            vert[1] += self.y
+            vert[2] += self.z
+        return vertices
+        
 
 
 class Cube(Figure):
     def display(self):
-        a_new = 1
-        b_new = 2
-        c_new = 3
+        a_new = 0.07
+        b_new = 0.1
+        c_new = 0.05
+        verts = np.zeros(8, [("pos", np.float32, 3), ("col", np.float32, 4)])
 
-        vertices = np.array(
-            [
-                [a_new, -c_new, -b_new],
-                [a_new, c_new, -b_new],
-                [-a_new, c_new, -b_new],
-                [-a_new, -c_new, -b_new],
-                [a_new, -c_new, b_new],
-                [a_new, c_new, b_new],
-                [-a_new, -c_new, b_new],
-                [-a_new, c_new, b_new],
-            ]
-        )
+        verts['pos'] = [
+            (a_new, -c_new, -b_new),
+            (a_new, c_new, -b_new),
+            (-a_new, c_new, -b_new),
+            (-a_new, -c_new, -b_new),
+            (a_new, -c_new, b_new),
+            (a_new, c_new, b_new),
+            (-a_new, c_new, b_new),
+            (-a_new, -c_new, b_new)]
 
-        quads = (
-            (0, 1, 2, 3),
-            (4, 5, 6, 7),
-            (0, 1, 5, 4),
-            (2, 3, 7, 6),
-            (0, 3, 6, 4),
-            (1, 2, 7, 5),
-        )
+        col1 = (0.0,0.0,1.0,1)
+        col2 = (0.0,0.0,0.5,1)
+        verts['col'] = [
+            col1,
+            col2,
+            col1,
+            col2,
+            col1,
+            col2,
+            col1,
+            col2]
 
-        vertices = self.rotate_vertices(vertices, self.angle)
+        inds = np.zeros(24, [("vals", np.int32)])
+        inds["vals"] = [
+            0, 1, 2, 3,
+            4, 5, 6, 7,
+            0, 1, 5, 4,
+            1, 2, 6, 5,
+            2, 3, 7, 6,
+            0, 3, 7, 4
+        ]
 
-        glPushMatrix()
-        gluPerspective(45, (800 / 600), 0.1, 70.0)
-        glTranslatef(self.x, self.y, self.z)
-        glColor3f(self.color[0], self.color[1], self.color[2])
-        glBegin(GL_QUADS)
-        for i, quad in enumerate(quads):
-            for j, vertex in enumerate(quad):
-                glVertex3fv(vertices[vertex])
-        glEnd()
-
-        glColor3f(1, 1, 1)
-        glBegin(GL_LINES)
-        for quad in quads:
-            for vertex in quad:
-                glVertex3fv(vertices[vertex])
-        glEnd()
-        glPopMatrix()
-
+        vertices = self.rotate_vertices(verts, self.angle)
+        vertices = self.translate(vertices)
+        return RenderOptions(vertices,8,inds,6,GL_QUADS)
 
 class Pyramid(Figure):
     def display(self):
-        d_new = 2
-        triangle_h = math.sqrt(3) / 2 * 3
-        vertices = (
+        d_new = 0.2
+        triangle_h = math.sqrt(3) / 2 * 0.3
+        verts= np.zeros(4, [("pos", np.float32, 3), ("col", np.float32, 4)])
+        verts['pos']= (
             (0.0, triangle_h, 0.0),  # Apex
             (d_new, 0.0, -d_new),
             (-d_new, 0.0, d_new),
             (0.0, 0.0, d_new * math.sqrt(3)),
         )
+        col1 = (0.0,1.0,0.0,1)
+        col2 = (0.0,0.7,0.0,1)
+        col3 = (0.0,0.5,0.0,1)
+        col4 = (0.0,0.2,0.0,1)
+        verts['col'] = [
+            col1,
+            col2,
+            col3,
+            col4,
+           ]
+        inds = np.zeros(12, [("vals", np.int32)])
+        inds["vals"] = [
+            0, 1, 2,
+            0, 2, 3,
+            0, 1, 3,
+            0, 3, 2]
 
-        quads = ((0, 1, 2), (0, 2, 3), (0, 1, 3), (0, 3, 2))
-
-        vertices = self.rotate_vertices(vertices, self.angle)
-
-        glPushMatrix()
-        gluPerspective(45, (800 / 600), 0.1, 70.0)
-        glTranslatef(self.x, self.y, self.z)
-        glColor3f(self.color[0], self.color[1], self.color[2])
-        glBegin(GL_TRIANGLES)
-        for quad in quads:
-            for vertex in quad:
-                glVertex3fv(vertices[vertex])
-        glEnd()
-
-        glColor3f(1, 1, 1)
-        glBegin(GL_LINES)
-        for quad in quads:
-            for vertex in quad:
-                glVertex3fv(vertices[vertex])
-        glEnd()
-        glPopMatrix()
-
+        vertices = self.rotate_vertices(verts, self.angle)
+        vertices = self.translate(vertices)
+        return RenderOptions(vertices,4,inds,4,GL_TRIANGLES)
 
 class Cone(Figure):
+    r = 0.2
+    h = 0.3
+
     def display(self):
-        vertices = []
-        edges = []
-        r = 3
-        h = 4
-        num_segments = 100
+        num_segments = 100 #0-99
 
-        for i in range(num_segments):
+        verts= np.zeros(num_segments+2, [("pos", np.float32, 3), ("col", np.float32, 4)])
+
+        for i in range(num_segments): #okreg
             angle = 2 * math.pi * i / num_segments
-            x = r * math.cos(angle)
-            y = r * math.sin(angle)
-            vertices.append((x, y, -h / 2))
+            x = self.r * math.cos(angle)
+            y = self.r * math.sin(angle)
+            verts["pos"][i] = (x, y, -self.h / 2)
+            verts["col"][i] = (0.455, 0.160, 1.000, 1.000)
 
-        vertices.append((0, 0, h / 2))
+        verts["pos"][num_segments] = (0, 0, self.h / 2)      #wierzchołek
+        verts["col"][num_segments] = (1, 1, 1, 1) 
 
-        for i in range(num_segments):
-            edges.append((i, (i + 1) % num_segments))
+        verts["pos"][num_segments+1] = (0, 0, -self.h / 2)   #srodek okregu
+        verts["col"][num_segments+1] = (0, 0, 0, 1)
 
-        for i in range(num_segments):
-            edges.append((i, num_segments))
+        inds = np.zeros(num_segments * 6, [("vals", np.int32)])
+        
+        temp_inds = []
+        for i in range(num_segments - 1):       #generacja pow. bocznej
+            temp_inds.append(i)
+            temp_inds.append(i + 1)
+            temp_inds.append(num_segments)
+        temp_inds.append(num_segments - 1)
+        temp_inds.append(num_segments)
+        temp_inds.append(0)
 
-        vertices = self.rotate_vertices(vertices, self.angle)
-        glPushMatrix()
-        gluPerspective(45, (800 / 600), 0.1, 70.0)
-        glTranslatef(self.x, self.y, self.z)
-        glColor3f(self.color[0], self.color[1], self.color[2])
-        glBegin(GL_QUADS)
-        for edge in edges:
-            for vertex in edge:
-                glVertex3fv(vertices[vertex])
-        glEnd()
+        for i in range(num_segments - 1):        #generacja pow. podstawy
+            temp_inds.append(i)
+            temp_inds.append(i + 1)
+            temp_inds.append(num_segments + 1)
+        temp_inds.append(num_segments - 1)
+        temp_inds.append(num_segments + 1)
+        temp_inds.append(0)
 
-        # glColor3f(1, 1, 1)
-        # glBegin(GL_LINES)
-        # for edge in edges:
-        #     for vertex in edge:
-        #         glVertex3fv(vertices[vertex])
-        # glEnd()
+        inds["vals"] = temp_inds
 
-        glBegin(GL_QUADS)
-        for i in range(num_segments):
-            glVertex3fv(vertices[i])
-            glVertex3fv(vertices[(i + 1) % num_segments])
-            glVertex3fv(vertices[-1])
-            glVertex3fv(vertices[i])
-        glEnd()
-        glPopMatrix()
+        vertices = self.rotate_vertices(verts, self.angle)
+        vertices = self.translate(vertices)
+        return RenderOptions(vertices,num_segments + 2,inds, num_segments *  6, GL_TRIANGLES)
 
 
 class Cylinder(Figure):
+    r = 0.2
+    h = 0.4
+
     def display(self):
-        vertices = []
         num_segments = 100
-        r = 3
-        h = 5
 
-        for i in range(num_segments):
+        verts= np.zeros(2 * (num_segments+1), [("pos", np.float32, 3), ("col", np.float32, 4)])
+        
+        for i in range(num_segments): #okreg 1 indeksy 0 - 99
             angle = 2 * math.pi * i / num_segments
-            x = r * math.cos(angle)
-            y = r * math.sin(angle)
-            vertices.append((x, y, -h / 2))
+            x = self.r * math.cos(angle)
+            y = self.r * math.sin(angle)
+            verts["pos"][i] = (x, y, -self.h / 2)
+            verts["col"][i] = (0.455, 0.160, 1.000, 1.000)
 
-        for i in range(num_segments):
+        for i in range(num_segments): #okreg 2 indeksy 100 - 199
             angle = 2 * math.pi * i / num_segments
-            x = r * math.cos(angle)
-            y = r * math.sin(angle)
-            vertices.append((x, y, h / 2))
+            x = self.r * math.cos(angle)
+            y = self.r * math.sin(angle)
+            verts["pos"][num_segments + i] = (x, y, self.h / 2)
+            verts["col"][num_segments + i] = (0.455, 0.160, 1.000, 1.000)
 
-        for i in range(num_segments):
-            vertices.append(vertices[i])
-            vertices.append(vertices[i + num_segments])
+        verts["pos"][2 * num_segments] = (0, 0, -self.h / 2)         #srodek okregu 1
+        verts["col"][2 * num_segments] = (0, 0, 0, 1)
 
-        vertices = self.rotate_vertices(vertices, self.angle)
+        verts["pos"][2 * num_segments + 1] = (0, 0, self.h / 2)      #srodek okregu 2
+        verts["col"][2 * num_segments + 1] = (1, 1, 1, 1) 
 
-        glPushMatrix()
-        gluPerspective(45, (800 / 600), 0.1, 70.0)
-        glTranslatef(self.x, self.y, self.z)
-        glColor3f(self.color[0], self.color[1], self.color[2])
-        glBegin(GL_QUADS)
-        for i in range(num_segments):
-            # Dolna podstawa
-            glVertex3fv(vertices[i])
-            glVertex3fv(vertices[(i + 1) % num_segments])
-            glVertex3fv(vertices[(i + 1) % num_segments + num_segments])
-            glVertex3fv(vertices[i + num_segments])
-            # Gorna podstawa
-            glVertex3fv(vertices[i + num_segments])
-            glVertex3fv(vertices[(i + 1) % num_segments + num_segments])
-            glVertex3fv(vertices[(i + 1) % num_segments * 2])
-            glVertex3fv(vertices[i + num_segments * 2])
-            # Powierzchnia boczna
-            glVertex3fv(vertices[i])
-            glVertex3fv(vertices[(i + 1) % num_segments])
-            glVertex3fv(vertices[(i + 1) % num_segments + num_segments])
-            glVertex3fv(vertices[i + num_segments])
-        glEnd()
+        inds = np.zeros(num_segments * 12, [("vals", np.int32)])
 
-        # glColor3f(1, 1, 1)
-        # glBegin(GL_LINES)
-        # for i in range(num_segments):
-        #     # Dolna podstawa
-        #     glVertex3fv(vertices[i])
-        #     glVertex3fv(vertices[(i + 1) % num_segments])
-        #     glVertex3fv(vertices[(i + 1) % num_segments + num_segments])
-        #     glVertex3fv(vertices[i + num_segments])
-        #     # Gorna podstawa
-        #     glVertex3fv(vertices[i + num_segments])
-        #     glVertex3fv(vertices[(i + 1) % num_segments + num_segments])
-        #     glVertex3fv(vertices[(i + 1) % num_segments * 2])
-        #     glVertex3fv(vertices[i + num_segments * 2])
-        # glEnd()
-        glPopMatrix()
+        temp_inds = []
+        for i in range(num_segments - 1):       #generacja pow. bocznej
+            temp_inds.append(i)
+            temp_inds.append(i + 1)
+            temp_inds.append(num_segments + i)
+            temp_inds.append(num_segments)
+            temp_inds.append(num_segments + i +1)
+            temp_inds.append(i + 1)
+
+        temp_inds.append(2 * num_segments - 1)
+        temp_inds.append(num_segments -1)
+        temp_inds.append(0) 
+        temp_inds.append(2 * num_segments - 1)
+        temp_inds.append(num_segments)
+        temp_inds.append(0) 
+
+        for i in range(num_segments - 1):        #generacja pow. podstawy 1
+            temp_inds.append(i)
+            temp_inds.append(i + 1)
+            temp_inds.append(2 * num_segments)
+        temp_inds.append(num_segments - 1)
+        temp_inds.append(2 * num_segments)
+        temp_inds.append(0)
+
+        for i in range(num_segments - 1):        #generacja pow. podstawy 1
+            temp_inds.append(num_segments + i)
+            temp_inds.append(num_segments + i + 1)
+            temp_inds.append(2 * num_segments + 1)
+        temp_inds.append(2 * num_segments - 1)
+        temp_inds.append(2 * num_segments + 1)
+        temp_inds.append(num_segments)
+
+        inds["vals"] = temp_inds
+        
+        vertices = self.rotate_vertices(verts, self.angle)
+        vertices = self.translate(vertices)
+        return RenderOptions(vertices, 2 * num_segments + 2,inds, num_segments *  12, GL_TRIANGLES)
