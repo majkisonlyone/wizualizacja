@@ -51,32 +51,6 @@ class Renderer:
         glDepthFunc(GL_LESS)
         self.rendered_objects = []
 
-    def render(self, func):
-        def function():
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glColor3f(1.0, 1.0, 1.0)
-            glLoadIdentity()
-            func()
-            glutSwapBuffers()
-            glFlush()
-
-        glutDisplayFunc(function)
-        glutMainLoop()
-
-    def render(self, disp, idle, keyboard):
-        def display():
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glColor3f(1.0, 1.0, 1.0)
-            glLoadIdentity()
-            disp()
-            glutSwapBuffers()
-            glFlush()
-
-        glutDisplayFunc(display)
-        glutIdleFunc(idle)
-        glutKeyboardFunc(keyboard)
-        glutMainLoop()
-
     def _shade(self):
         self.shader = glCreateProgram()
         vshader = glCreateShader(GL_VERTEX_SHADER)
@@ -124,7 +98,7 @@ class Renderer:
                 GL_ARRAY_BUFFER, render.inds.nbytes, render.inds, GL_STATIC_DRAW
             )
             glBindVertexArray(0)
-            print("prerend")
+            # print("prerend")
             self.rendered_objects.append(
                 RenderedObject(
                     temp_vao, render.inds, len(render.inds), render.draw_option
@@ -148,10 +122,10 @@ class Renderer:
         self._shade()
         self._prerender(render_options)
         if idle is not None:
-            print("idle")
+            # print("idle")
             glutIdleFunc(idle)
         if keyboard is not None:
-            print("keyboard")
+            # print("keyboard")
             glutKeyboardFunc(keyboard)
         glutMainLoop()
 
@@ -171,9 +145,9 @@ class Renderer:
         glutReshapeFunc(self.reshape)
 
         if idle is not None:
-            print("idle")
+            # print("idle")
             glutIdleFunc(idle)
         if keyboard is not None:
-            print("keyboard")
+            # print("keyboard")
             glutKeyboardFunc(keyboard)
         glutMainLoop()

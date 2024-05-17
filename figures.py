@@ -80,17 +80,16 @@ class Cube(Figure):
             (-a_new, c_new, b_new),
             (-a_new, -c_new, b_new)]
 
-        col1 = (0.0,0.0,1.0,1)
-        col2 = (0.0,0.0,0.5,1)
         verts['col'] = [
-            col1,
-            col2,
-            col1,
-            col2,
-            col1,
-            col2,
-            col1,
-            col2]
+            self.color,
+            self.color,
+            self.color,
+            self.color,
+            self.color,
+            self.color,
+            self.color,
+            self.color,
+        ]
 
         inds = np.zeros(24, [("vals", np.int32)])
         inds["vals"] = [
@@ -117,15 +116,12 @@ class Pyramid(Figure):
             (-d_new, 0.0, d_new),
             (0.0, 0.0, d_new * math.sqrt(3)),
         )
-        col1 = (0.0,1.0,0.0,1)
-        col2 = (0.0,0.7,0.0,1)
-        col3 = (0.0,0.5,0.0,1)
-        col4 = (0.0,0.2,0.0,1)
+ 
         verts['col'] = [
-            col1,
-            col2,
-            col3,
-            col4,
+            self.color,
+            self.color,
+            self.color,
+            self.color,
            ]
         inds = np.zeros(12, [("vals", np.int32)])
         inds["vals"] = [
@@ -152,7 +148,7 @@ class Cone(Figure):
             x = self.r * math.cos(angle)
             y = self.r * math.sin(angle)
             verts["pos"][i] = (x, y, -self.h / 2)
-            verts["col"][i] = (0.455, 0.160, 1.000, 1.000)
+            verts["col"][i] = self.color
 
         verts["pos"][num_segments] = (0, 0, self.h / 2)      #wierzchołek
         verts["col"][num_segments] = (1, 1, 1, 1) 
@@ -200,14 +196,14 @@ class Cylinder(Figure):
             x = self.r * math.cos(angle)
             y = self.r * math.sin(angle)
             verts["pos"][i] = (x, y, -self.h / 2)
-            verts["col"][i] = (0.455, 0.160, 1.000, 1.000)
+            verts["col"][i] = self.color
 
         for i in range(num_segments): #okreg 2 indeksy 100 - 199
             angle = 2 * math.pi * i / num_segments
             x = self.r * math.cos(angle)
             y = self.r * math.sin(angle)
             verts["pos"][num_segments + i] = (x, y, self.h / 2)
-            verts["col"][num_segments + i] = (0.455, 0.160, 1.000, 1.000)
+            verts["col"][num_segments + i] = self.color
 
         verts["pos"][2 * num_segments] = (0, 0, -self.h / 2)         #srodek okregu 1
         verts["col"][2 * num_segments] = (0, 0, 0, 1)
