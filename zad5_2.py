@@ -5,7 +5,7 @@ from OpenGL.GLUT import *
 import math
 import numpy as np
 from renderer import Renderer
-from figures import Cube, Pyramid, Cone, Cylinder
+from figures import Sphere
 
 stop_rotating = False
 
@@ -18,20 +18,19 @@ def rotating_objects():
     global y_angle
     global z_angle
     return [
-        Cube(-0.2, 0.5, 0.4, (1, 1, 0, 1), [x_angle, y_angle, z_angle]).display(),
-        Pyramid(0.5, -0.5, 0.3, (1, 1, 0, 1), [x_angle, y_angle, z_angle]).display(),
-        Cone(-0.7, 0.5, 0.1, (1, 1, 0, 1), [x_angle, y_angle, z_angle]).display(),
-        Cylinder(-0.7, -0.5, 0.3, (1, 1, 0, 1), [x_angle, y_angle, z_angle]).display(),
+       Sphere(0.5, 0.5, 0.5, (1, 0, 0, 1), [x_angle, y_angle, z_angle]).set_dimensions(0.3,3).display(),
+       Sphere(-1, 1, 0.7, (1, 0, 0, 1), [x_angle, y_angle, z_angle]).set_dimensions(0.4,3).display(),
+       Sphere(-0.2, -0.2, 0.2, (1, 0, 0, 1), [x_angle, y_angle, z_angle]).set_dimensions(0.5,3).display(),
     ]
-
+#todo: parametry projekcji, ruch kamery
 def spin():
     global x_angle
     global y_angle
     global z_angle
-    if not stop_rotating:
-        x_angle += 0.05
-        y_angle += 0.05
-        z_angle += 0.05
+    # if not stop_rotating:
+    #     x_angle += 0.05
+    #     y_angle += 0.05
+    #     z_angle += 0.05
     sleep(0.1)
     glutPostRedisplay()
 

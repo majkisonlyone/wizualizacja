@@ -74,7 +74,7 @@ class Renderer:
         SCREEN_WIDTH = 800
         SCREEN_HEIGHT = 600
         glutInit()
-        glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE)
+        glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH)
         glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT)
         glutInitWindowPosition(100, 100)
         glutCreateWindow(name)

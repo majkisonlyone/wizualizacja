@@ -9,6 +9,9 @@ from figures import Cube, Pyramid, Cone, Cylinder, Sphere
 
 stop_rotating = False
 
+r = float(input("Podaj r (sugestia od 0.1 do 0.5): ")) #0.4
+q = int(input("Podaj q (sugestia od 1 do 5): ")) # 2
+
 x_angle = 0
 y_angle = 0
 z_angle = 0
@@ -18,7 +21,7 @@ def rotating_objects():
     global y_angle
     global z_angle
     return [
-        Sphere(-0.2, 0.5, 0.4, (1, 1, 0, 1), [x_angle, y_angle, z_angle]).display(),
+        Sphere(-0.2, 0.5, 0.5, (1, 0, 0, 1), [x_angle, y_angle, z_angle]).set_dimensions(r,q).display(),
     ]
 
 def spin():
@@ -45,5 +48,6 @@ def keyboard(k, x, y):
     if (k == b'q'):
         glutLeaveMainLoop()
 
-renderer = Renderer("zadanie3.py")
+
+renderer = Renderer("zadanie4_5.py")
 renderer.render_with_shader_rot_cam("orth",rotating_objects, spin, keyboard)
