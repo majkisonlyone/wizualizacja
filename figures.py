@@ -67,10 +67,20 @@ class Figure:
 
 
 class Cube(Figure):
+    a = 0.07
+    b = 0.1
+    c = 0.05
+
+    def set_dimensions(self,a,b,c):
+        self.a = a
+        self.b = b
+        self.c = c
+        return self
+
     def display(self):
-        a_new = 0.07
-        b_new = 0.1
-        c_new = 0.05
+        a_new = self.a/2
+        b_new = self.b/2
+        c_new = self.c/2
         verts = np.zeros(8, [("pos", np.float32, 3), ("col", np.float32, 4)])
 
         verts['pos'] = [
@@ -188,6 +198,11 @@ class Cone(Figure):
 class Cylinder(Figure):
     r = 0.2
     h = 0.4
+
+    def set_dimensions(self,r,h):
+        self.r = r
+        self.h = h
+        return self
 
     def display(self):
         num_segments = 100
