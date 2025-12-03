@@ -1,3 +1,9 @@
+# ABOUT
+Project developed during WUST studies with main requirements being:
+- create rendering from scratch using OpenGL and GLUT
+- do not use `pygame` or similar python libraries that simplify/handle rendering
+
+
 # SETUP
 
 1. Install python dependencies from `requirements.txt`
@@ -18,12 +24,14 @@
 
     - WA: comment out [this line](https://github.com/mcfletch/pyopengl/blob/29b79e8966ba2930a5c44829b02dffc1ca600752/OpenGL/contextdata.py#L38) ass suggested by [this WA](https://github.com/pygame/pygame/issues/3110#issuecomment-1746668102)
 
+
 # USAGE
 
 1. run `zad*` python files, eg:
     ```
     python3 zad4_1.py
     ```
+
 
 # ADDITIONAL NOTES
 
@@ -35,3 +43,14 @@
     - use `w` and `s` keys to move camera closer or farther
     - use `a` and `d` keys to rotate camera left/right
     - use `r` and `f` keys to rotate camera upwards/downwards
+
+
+## SAMPLE RENDERS
+
+1. `zad4_1.py`
+
+    ![zad4_1](./sample_renders/zad4_1-n-angled_polygon.png)
+
+2. `zad5_4.py`
+
+    ![zad5_4](./sample_renders/zad5_4-moving_robot.png)
