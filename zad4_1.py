@@ -4,7 +4,6 @@ from renderer import Renderer, RenderOptions
 import numpy as np
 
 
-
 def polygon(sides, side_length):
     verts = np.zeros(sides + 1, [("pos", np.float32, 3), ("col", np.float32, 4)])
     radius = side_length / (2 * math.sin(math.pi / sides))

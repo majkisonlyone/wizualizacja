@@ -13,6 +13,7 @@ x_angle = 0
 y_angle = 0
 z_angle = 0
 
+
 def rotating_objects():
     global x_angle
     global y_angle
@@ -23,6 +24,7 @@ def rotating_objects():
         Cone(-0.7, 0.5, 0, (1, 1, 0, 1), [x_angle, y_angle, z_angle]).display(),
         Cylinder(-0.7, -0.5, 0, (1, 1, 0, 1), [x_angle, y_angle, z_angle]).display(),
     ]
+
 
 def spin():
     global x_angle
@@ -35,9 +37,11 @@ def spin():
     sleep(0.1)
     glutPostRedisplay()
 
+
 def keyboard_interrupt(k, x, y):
     global stop_rotating
     stop_rotating = not stop_rotating
+
 
 renderer = Renderer("zadanie3.py")
 renderer.render_with_shader_rot(rotating_objects, spin, keyboard_interrupt)
